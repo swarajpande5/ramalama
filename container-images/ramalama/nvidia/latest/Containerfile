@@ -1,0 +1,28 @@
+FROM quay.io/ramalama/ramalama:latest
+
+# Make sure that Nvidia Container Toolkit is installed on the host OS.
+# Reference: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+
+# Install Nvidia drivers and and CUDA development kit
+
+RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+    dnf --enablerepo=ubi-9-baseos-rpms && \
+    dnf --enablerepo=ubi-9-appstream-rpms && \
+    dnf install -y epel-release && \
+    crb enable && \
+    dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/fedora39/x86_64/cuda-fedora39.repo && \
+    dnf update --refresh
+
+RUN dnf module install -y nvidia-driver:latest-dkms && \
+    dnf install -y cuda-toolkit && \
+    dnf clean all && \
+    rm -rf /var/cache/*dnf*
+
+# Set CUDA environment variables after installing CUDA libraries
+ENV GGML_CCACHE=0
+ENV GGML_CUDA=1
+
+# Add binaries in PATH
+RUN echo "PATH=$PATH:/usr/local/cuda/bin" >> ~/.bashrc
+RUN source ~/.bashrc
+RUN cat ~/.bashrc
